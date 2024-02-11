@@ -1,2 +1,2 @@
-# chargeFinder
+# ChargeFinder
  Electric Charge Finder
