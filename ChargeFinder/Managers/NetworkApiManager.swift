@@ -1,5 +1,5 @@
 //
-//  NetworkApiManagers.swift
+//  NetworkApiManager.swift
 //  ChargeFinder
 //
 //  Created by Ghassen on 11.02.2024.

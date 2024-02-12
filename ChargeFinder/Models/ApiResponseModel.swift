@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 
 enum powerValueType: Codable {
@@ -132,6 +133,7 @@ struct  StationsDataResponseModel :Decodable {
             
             struct GeoCoordinatesModel: Decodable {
                 let google: String
+                var coordinatesPoints :CLLocationCoordinate2D?
                 
                 enum CodingKeys: String, CodingKey {
                     case google = "Google"
@@ -140,6 +142,8 @@ struct  StationsDataResponseModel :Decodable {
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     google =  try container.decode(String.self, forKey: .google)
+                    coordinatesPoints  = convertCoordinatesFromString(coordinateString: google)
+                    
                 }
             }
             

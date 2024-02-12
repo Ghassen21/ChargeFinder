@@ -9,9 +9,10 @@ import SwiftUI
 
 @main
 struct ChargeFinderApp: App {
-    var body: some Scene {
+        var body: some Scene {
         WindowGroup {
-            ContentView()
+            StationsList()
         }
     }
 }
+
