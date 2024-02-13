@@ -11,7 +11,7 @@ import CoreLocation
 
 enum powerValueType: Codable {
     case intType (Int)
-    case floatType(Double)
+    case doubleType(Double)
 }
 
 struct  StationsDataResponseModel :Decodable {
@@ -26,8 +26,10 @@ struct  StationsDataResponseModel :Decodable {
         eVSEData = try container.decode([StationsDataResponseModel.EVSEDataModel].self, forKey: .eVSEData)
     }
     
-    struct EVSEDataModel: Decodable {
-        let eVSEDataRecord: [EVSEDataRecordModel]
+    struct EVSEDataModel: Decodable,Identifiable {
+        var id: String?
+        
+        var eVSEDataRecord: [EVSEDataRecordModel]
         let operatorID: String
         let operatorName: String
         
@@ -38,15 +40,18 @@ struct  StationsDataResponseModel :Decodable {
         }
         
         //Each struct has a custom initializer (init(from decoder: Decoder)) to decode the JSON data into Swift objects in order to specify the keys for decoding.
-        
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             eVSEDataRecord =  try container.decode([StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel].self, forKey: .eVSEDataRecord)
+            //Remove depulicates element from array
+            eVSEDataRecord = eVSEDataRecord.removingDuplicates(withSame: \.chargingStationId)
             operatorID = try container.decode(String.self, forKey: .operatorID)
             operatorName = try container.decode(String.self, forKey: .operatorName)
+            id = operatorID
         }
         
-        struct EVSEDataRecordModel: Decodable {
+        struct EVSEDataRecordModel: Decodable,Identifiable {
+            let id: String?
             let accessibilityLocation : String?
             let address: AddressModel?
             let authenticationModes: [String]
@@ -87,7 +92,7 @@ struct  StationsDataResponseModel :Decodable {
                 chargingStationId = try container.decode(String.self, forKey: .chargingStationId)
                 geoCoordinates = try container.decode(StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel.GeoCoordinatesModel.self, forKey: .geoCoordinates)
                 lastUpdate = try container.decodeIfPresent(String.self, forKey: .lastUpdate)
-                
+                id = chargingStationId
             }
             
             struct AddressModel: Decodable {
@@ -160,10 +165,10 @@ struct  StationsDataResponseModel :Decodable {
                 init(from decoder: Decoder) throws {
                     let container = try decoder.container(keyedBy: CodingKeys.self)
                     powertype  = try container.decodeIfPresent(String.self, forKey: .powertype)
-                    if let intType = try? container.decode(Int.self, forKey: .power) {
-                        power = powerValueType.intType(intType)
-                    } else if let floatType = try? container.decode(Double.self, forKey: .power) {
-                        power = powerValueType.floatType(floatType)
+                    if let intTypeValue = try? container.decode(Int.self, forKey: .power) {
+                        power = powerValueType.intType(intTypeValue)
+                    } else if let doubeTypeValue = try? container.decode(Double.self, forKey: .power) {
+                        power = powerValueType.doubleType(doubeTypeValue)
                     }
                 }
             }

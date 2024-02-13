@@ -18,7 +18,7 @@ class APIManager {
     private let evsDataStatusUrl = URL(string: "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/status/ch.bfe.ladestellen-elektromobilitaet.json")
     
     private init() { }
-
+    
     // Get all charging stations Data List
     func fetchChargingStationsData(completion: @escaping (Result<StationsDataResponseModel,Error>) -> Void) {
         URLSession.shared.dataTask(with: self.evsDataUrl!) { data, response, error in
@@ -33,7 +33,6 @@ class APIManager {
             }
             do {
                 let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
                 let products = try decoder.decode(StationsDataResponseModel.self, from: data)
                 completion(.success(products))
             }
@@ -66,4 +65,19 @@ class APIManager {
             }
         }.resume()
     }
+    
+    //Fetch the status of a charging station based on its Id.
+    func fetchStatusForStation(stationId: String, completion: @escaping ((String)?) -> Void) {
+        APIManager.shared.fetchChargingStationsAvailability { result in
+            switch result {
+            case .success(let stationsStatusList):
+                let evseStatus = stationsStatusList.evseStatuses.first(where: { $0.evseStatusRecord.contains { $0.evseID == stationId } })
+                let evseStatusRecord = evseStatus?.evseStatusRecord.first(where: { $0.evseID == stationId })
+                completion( evseStatusRecord?.evseStatus)
+            case .failure(_):
+                completion(nil)
+            }
+        }
+    }
+
 }

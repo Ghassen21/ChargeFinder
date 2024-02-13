@@ -11,7 +11,7 @@ import SwiftUI
 struct ChargeFinderApp: App {
         var body: some Scene {
         WindowGroup {
-            StationsList()
+            StationsList(stationsList: [])
         }
     }
 }

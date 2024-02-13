@@ -12,9 +12,9 @@ class LocationCoordinateManager: NSObject{
     
     static let shared = LocationCoordinateManager()
     private let locationManager = CLLocationManager()
-    private var currentCoordinatesValue :CLLocationCoordinate2D? = CLLocationCoordinate2D(latitude: 46.81418322454504, longitude: 7.150812603476325)
-    private let radiusInKilometers: Double = 1.0
-    var completionHandler :   (([StationsDataResponseModel.EVSEDataModel]?,Error?) -> ()?)? = nil
+    private var currentCoordinatesValue :CLLocationCoordinate2D?
+    private let radiusInKilometers: Double = 30
+    var completionHandler :   (([StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel]?,Error?) -> ()?)? = nil
     
     override init() {
         super.init()
@@ -45,8 +45,8 @@ class LocationCoordinateManager: NSObject{
     }
     
     // filters the nested object StationsDataResponseModel by the `coordinatesPoints` key based on a current given coordinate and a the radius:
-    func filterStationsWithinRadius(stationsDataResponseModel: StationsDataResponseModel) -> [StationsDataResponseModel.EVSEDataModel] {
-        var filteredStations: [StationsDataResponseModel.EVSEDataModel] = []
+    func filterStationsWithinRadius(stationsDataResponseModel: StationsDataResponseModel) -> [StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel] {
+        var filteredStations: [StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel] = []
         
         for evseDataModel in stationsDataResponseModel.eVSEData {
             for evseDataRecordModel in evseDataModel.eVSEDataRecord {
@@ -55,7 +55,7 @@ class LocationCoordinateManager: NSObject{
                 }
                 let isCoordinateInRadius = isCoordinateInRadius(sourceCoordinate: self.currentCoordinatesValue!, targetCoordinate: stationCoordinate)
                 if isCoordinateInRadius{
-                    filteredStations.append(evseDataModel)
+                    filteredStations.append(evseDataRecordModel)
                     break
                 }
             }
@@ -64,7 +64,7 @@ class LocationCoordinateManager: NSObject{
     }
     
     
-    func getStationListWithinRadius(completion : @escaping  ([StationsDataResponseModel.EVSEDataModel]?, Error?) -> Void)
+    func getStationListWithinRadius(completion : @escaping  ([StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel]?, Error?) -> Void)
     {
         self.completionHandler = completion
     }
@@ -89,16 +89,42 @@ extension LocationCoordinateManager: CLLocationManagerDelegate {
                     switch result{
                     case .success(let stationsList):
                         let stationListInRadius = self.filterStationsWithinRadius(stationsDataResponseModel: stationsList)
-                        self.completionHandler?(stationListInRadius, nil)
-                        print ("LocationManager-Success to get stations  filterted List")
+                        //Sort the stationListInRadius array in descending order based on the power (kW) of the charging facilities
+                        let sortedStationListbyPowerValue = stationListInRadius.sorted { station1, station2 in
+                            guard let power1 = station1.chargingFacilities.first?.power,
+                                  let power2 = station2.chargingFacilities.first?.power else {
+                                // If one or both power values are nil, handle it here
+                                if station1.chargingFacilities.first?.power == nil && station2.chargingFacilities.first?.power == nil {
+                                    // If both power values are nil, stations are considered equal
+                                    return false
+                                } else if station1.chargingFacilities.first?.power == nil {
+                                    // If only power1 is nil, station1 comes after station2
+                                    return false
+                                } else {
+                                    // If only power2 is nil, station2 comes after station1
+                                    return true
+                                }
+                            }
+                            switch (power1, power2) {
+                            case (.intType(let valueInt1), .intType(let valueInt2)):
+                                return valueInt1 > valueInt2
+                            case (.intType(let valueInt1), .doubleType(let doubleTypeValue2)):
+                                return Double(valueInt1) > doubleTypeValue2
+                            case (.doubleType(let doubleTypeValue1), .intType(let intValue2)):
+                                return doubleTypeValue1 > Double(intValue2)
+                            case (.doubleType(let doubleTypeValue1), .doubleType(let doubleTypeValue2)):
+                                return doubleTypeValue1 > doubleTypeValue2
+                            }
+                        }
+
+                        self.completionHandler?(sortedStationListbyPowerValue, nil)
                     case .failure(let error):
                         self.completionHandler?(nil, error)
-                        print ("LocationManager-failure  to get stations List \(error)")
+                        
                     }
                 }
             }
         }
     }
 }
-
 
