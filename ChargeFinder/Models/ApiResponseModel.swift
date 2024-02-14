@@ -14,7 +14,7 @@ enum powerValueType: Codable {
     case doubleType(Double)
 }
 
-struct  StationsDataResponseModel :Decodable {
+struct  StationsDataResponseModel :Decodable  {
     let eVSEData: [EVSEDataModel]
     
     enum CodingKeys: String, CodingKey {
@@ -50,9 +50,9 @@ struct  StationsDataResponseModel :Decodable {
             id = operatorID
         }
         
-        struct EVSEDataRecordModel: Decodable,Identifiable {
+        struct EVSEDataRecordModel: Decodable,Identifiable,Encodable{
             let id: String?
-            let accessibilityLocation : String?
+            var accessibilityLocation : String?
             let address: AddressModel?
             let authenticationModes: [String]
             let chargingFacilities: [ChargingFacilityModel]
@@ -64,7 +64,7 @@ struct  StationsDataResponseModel :Decodable {
             let geoCoordinates: GeoCoordinatesModel
             let lastUpdate: String?
             
-            enum CodingKeys: String, CodingKey {
+            enum CodingKeys: String, CodingKey,Encodable {
                 
                 case accessibilityLocation = "AccessibilityLocation"
                 case adddress = "Adddress"
@@ -82,7 +82,7 @@ struct  StationsDataResponseModel :Decodable {
             init(from decoder: Decoder) throws {
                 let container = try decoder.container(keyedBy: CodingKeys.self)
                 accessibilityLocation =  try container.decodeIfPresent(String.self, forKey: .accessibilityLocation)
-               address = try container.decodeIfPresent(StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel.AddressModel.self, forKey: .adddress)
+                address = try container.decodeIfPresent(StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel.AddressModel.self, forKey: .adddress)
                 authenticationModes = try container.decode([String].self, forKey: .authenticationModes)
                 chargingFacilities  = try container.decode([StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel.ChargingFacilityModel].self, forKey: .chargingFacilities)
                 isOpen24Hours = try container.decode(Bool.self, forKey: .isOpen24Hours)
@@ -95,7 +95,25 @@ struct  StationsDataResponseModel :Decodable {
                 id = chargingStationId
             }
             
-            struct AddressModel: Decodable {
+            func encode(to encoder: Encoder) throws {
+                var container = encoder.container(keyedBy: CodingKeys.self)
+                try container.encode(accessibilityLocation, forKey: .accessibilityLocation)
+                try container.encode(address, forKey: .adddress)
+                try container.encode(authenticationModes, forKey: .authenticationModes)
+                try container.encode(chargingFacilities, forKey: .chargingFacilities)
+                try container.encode(isOpen24Hours, forKey: .isOpen24Hours)
+                try container.encode(paymentOptions, forKey: .paymentOptions)
+                try container.encode(plugs, forKey: .plugs)
+                try container.encode(accessibility, forKey: .accessibility)
+                try container.encode(chargingStationId, forKey: .chargingStationId)
+                try container.encode(geoCoordinates, forKey: .geoCoordinates)
+                try container.encode(lastUpdate, forKey: .lastUpdate)
+                
+                
+            }
+            
+            
+            struct AddressModel: Decodable ,Encodable {
                 let houseNumber : String?
                 let timeZone: String?
                 let city: String
@@ -134,9 +152,26 @@ struct  StationsDataResponseModel :Decodable {
                     parkingSpot = try container.decodeIfPresent(String.self, forKey: .parkingSpot)
                     parkingFacility = try container.decodeIfPresent(Bool.self, forKey: .parkingFacility)
                 }
+                
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(houseNumber, forKey: .houseNumber)
+                    try container.encode(timeZone, forKey: .timeZone)
+                    try container.encode(city, forKey: .city)
+                    try container.encode(country, forKey: .country)
+                    try container.encode(postalCode, forKey: .postalCode)
+                    try container.encode(street, forKey: .street)
+                    try container.encode(floor, forKey: .floor)
+                    try container.encode(region, forKey: .region)
+                    try container.encode(parkingSpot, forKey: .parkingSpot)
+                    try container.encode(parkingFacility, forKey: .parkingFacility)
+                }
+                
+                
+                
             }
             
-            struct GeoCoordinatesModel: Decodable {
+            struct GeoCoordinatesModel: Decodable ,Encodable{
                 let google: String
                 var coordinatesPoints :CLLocationCoordinate2D?
                 
@@ -150,9 +185,14 @@ struct  StationsDataResponseModel :Decodable {
                     coordinatesPoints  = convertCoordinatesFromString(coordinateString: google)
                     
                 }
+                
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    try container.encode(google, forKey: .google)
+                }
             }
             
-            struct ChargingFacilityModel: Decodable {
+            struct ChargingFacilityModel: Decodable,Encodable {
                 
                 var  power: powerValueType?
                 var  powertype: String?
@@ -171,6 +211,19 @@ struct  StationsDataResponseModel :Decodable {
                         power = powerValueType.doubleType(doubeTypeValue)
                     }
                 }
+                func encode(to encoder: Encoder) throws {
+                    var container = encoder.container(keyedBy: CodingKeys.self)
+                    switch power {
+                    case .intType(let value):
+                        try container.encode(value, forKey: .power)
+                    case .doubleType(let value):
+                        try container.encode(value, forKey: .power)
+                    case .none:
+                        break
+                    }
+                    try container.encode(powertype, forKey: .powertype)
+                }
+                
             }
         }
     }

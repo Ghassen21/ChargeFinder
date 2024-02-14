@@ -12,6 +12,10 @@ struct StationsList: View {
     @State private var isCircleRotating = true
     @State private var animateStart = true
     @State private var animateEnd = true
+    @State private var showingAlert = false
+
+    let timer = Timer.publish(every: 40, on: .main, in: .common).autoconnect()
+    
     var body: some View {
         
         ZStack {
@@ -35,7 +39,7 @@ struct StationsList: View {
                         withAnimation(Animation
                             .linear(duration: 1)
                             .repeatForever(autoreverses: false)) {
-                               
+                                
                             }
                         withAnimation(Animation
                             .linear(duration: 1)
@@ -53,14 +57,14 @@ struct StationsList: View {
                 
             } else {
                 List {
-                    ForEach(stationsList){ stationItem in
+                    ForEach(self.stationsList){ stationItem in
                         StationItemRow(stationItem: stationItem)
                     }
                 }
             }
             
         }.onAppear {
-            LocationCoordinateManager.shared.getStationListWithinRadius { result, error in
+            LocationServiceManager.shared.getStationListWithinRadius { result, error in
                 if error == nil {
                     if result != nil{
                         self.stationsList = result!
@@ -68,12 +72,38 @@ struct StationsList: View {
                         animateStart = false
                         animateEnd = true
                     }
+                }else {
+                    if !NetworkManagerReachability().isReachable(){
+                        // show alert to notify the user that internet is not reachable
+                        showingAlert = true
+                        self.stationsList = PersistenceManger().readStationList() ?? []
+                        self.isCircleRotating = false
+                        animateStart = false
+                        animateEnd = true
+                    }
+                }
+            }
+            
+        }.alert("Please check you internet connection", isPresented: $showingAlert) {
+            Button("OK", role: .cancel) { }
+        }
+        .onReceive(timer) { _  in
+            // Trigger another round of station fetching when the timer passes 1 minute
+            self.refetchStationsListData()
+        }
+    }
+    func refetchStationsListData() {
+        LocationServiceManager.shared.getStationListWithinRadius { result, error in
+            if error == nil {
+                if result != nil{
+                    self.stationsList = []
                 }
             }
         }
-        
     }
 }
+
+
 
 
 

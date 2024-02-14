@@ -57,8 +57,9 @@ class APIManager {
             do {
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
-                let products = try decoder.decode(ChargingStationStatusResponse.self, from: data)
-                completion(.success(products))
+                let result = try decoder.decode(ChargingStationStatusResponse.self, from: data)
+                PersistenceManger().saveStationAvailabilityStatus(StationsStatus: result)
+                completion(.success(result))
             }
             catch {
                 completion(.failure(DataError.decodeError))
@@ -67,17 +68,36 @@ class APIManager {
     }
     
     //Fetch the status of a charging station based on its Id.
-    func fetchStatusForStation(stationId: String, completion: @escaping ((String)?) -> Void) {
+    func fetchStatusForStation(stationId: String, completion: @escaping (String?) -> Void) {
         APIManager.shared.fetchChargingStationsAvailability { result in
             switch result {
             case .success(let stationsStatusList):
-                let evseStatus = stationsStatusList.evseStatuses.first(where: { $0.evseStatusRecord.contains { $0.evseID == stationId } })
-                let evseStatusRecord = evseStatus?.evseStatusRecord.first(where: { $0.evseID == stationId })
-                completion( evseStatusRecord?.evseStatus)
-            case .failure(_):
-                completion(nil)
+                guard let evseStatus = stationsStatusList.evseStatuses.first(where: { $0.evseStatusRecord.contains { $0.evseID == stationId } }),
+                      let evseStatusRecord = evseStatus.evseStatusRecord.first(where: { $0.evseID == stationId }) else {
+                    completion(nil)
+                    return
+                }
+                completion(evseStatusRecord.evseStatus)
+            case .failure:
+                //If the API call fails, it checks if the device is offline by using NetworkManagerReachability.
+                //in order attempts to retrieve the availability status from local storage using PersistenceManger
+                if !NetworkManagerReachability().isReachable() {
+                    if let stationsStatusList = PersistenceManger().readAvailabilityStatusList() {
+                        guard let evseStatus = stationsStatusList.evseStatuses.first(where: { $0.evseStatusRecord.contains { $0.evseID == stationId } }),
+                              let evseStatusRecord = evseStatus.evseStatusRecord.first(where: { $0.evseID == stationId }) else {
+                            completion(nil)
+                            return
+                        }
+                        completion(evseStatusRecord.evseStatus)
+                    } else {
+                        completion(nil)
+                    }
+                } else {
+                    completion(nil)
+                }
             }
         }
     }
-
 }
+
+

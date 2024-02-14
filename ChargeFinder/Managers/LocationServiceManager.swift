@@ -8,9 +8,9 @@
 import Foundation
 import CoreLocation
 
-class LocationCoordinateManager: NSObject{
+class LocationServiceManager: NSObject{
     
-    static let shared = LocationCoordinateManager()
+    static let shared = LocationServiceManager()
     private let locationManager = CLLocationManager()
     private var currentCoordinatesValue :CLLocationCoordinate2D?
     private let radiusInKilometers: Double = 30
@@ -71,7 +71,7 @@ class LocationCoordinateManager: NSObject{
     
 }
 
-extension LocationCoordinateManager: CLLocationManagerDelegate {
+extension LocationServiceManager: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         print("LocationManager-didFailWithError :\(error)")
@@ -80,7 +80,7 @@ extension LocationCoordinateManager: CLLocationManagerDelegate {
     //Delegate to receive updated heading info locations
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let localValue : CLLocationCoordinate2D = manager.location?.coordinate else { return }
-        print("LocationManager-didUpdateLocations-coodinates = \(localValue.latitude) \(localValue.longitude)")
+        print("LocationManager-didUpdateLocations coodinates = \(localValue.latitude) \(localValue.longitude)")
         self.currentCoordinatesValue = localValue
         if locations.first != nil {
             if self.currentCoordinatesValue != nil
@@ -116,11 +116,12 @@ extension LocationCoordinateManager: CLLocationManagerDelegate {
                                 return doubleTypeValue1 > doubleTypeValue2
                             }
                         }
-
+                        //save station in user default 
+                        PersistenceManger().saveStationsList(StationList: sortedStationListbyPowerValue)
                         self.completionHandler?(sortedStationListbyPowerValue, nil)
                     case .failure(let error):
                         self.completionHandler?(nil, error)
-                        
+                        print ("LocationManager-failure  to get stations List \(error)")
                     }
                 }
             }
