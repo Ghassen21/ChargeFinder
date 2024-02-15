@@ -21,6 +21,17 @@ func convertCoordinatesFromString(coordinateString: String) -> CLLocationCoordin
     return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
 }
 
+func convertDateFormat(_ dateString: String) -> String? {
+    let dateFormatter = DateFormatter()
+    dateFormatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
+    
+    if let date = dateFormatter.date(from: dateString) {
+        dateFormatter.dateFormat = "dd-MM-yyyy HH:mm"
+        return dateFormatter.string(from: date)
+    } else {
+        return nil
+    }
+}
 extension Sequence {
     func removingDuplicates<T: Hashable>(withSame keyPath: KeyPath<Element, T>) -> [Element] {
         var seen = Set<T>()

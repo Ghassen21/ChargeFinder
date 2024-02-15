@@ -13,7 +13,7 @@ class LocationServiceManager: NSObject{
     static let shared = LocationServiceManager()
     private let locationManager = CLLocationManager()
     private var currentCoordinatesValue :CLLocationCoordinate2D?
-    private let radiusInKilometers: Double = 30
+    private let radiusInKilometers: Double = 1.0
     var completionHandler :   (([StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel]?,Error?) -> ()?)? = nil
     
     override init() {

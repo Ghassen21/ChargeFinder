@@ -62,8 +62,8 @@ struct  StationsDataResponseModel :Decodable  {
             let accessibility: String
             let chargingStationId: String
             let geoCoordinates: GeoCoordinatesModel
-            let lastUpdate: String?
-            
+            var lastUpdate: String?
+
             enum CodingKeys: String, CodingKey,Encodable {
                 
                 case accessibilityLocation = "AccessibilityLocation"
@@ -92,6 +92,7 @@ struct  StationsDataResponseModel :Decodable  {
                 chargingStationId = try container.decode(String.self, forKey: .chargingStationId)
                 geoCoordinates = try container.decode(StationsDataResponseModel.EVSEDataModel.EVSEDataRecordModel.GeoCoordinatesModel.self, forKey: .geoCoordinates)
                 lastUpdate = try container.decodeIfPresent(String.self, forKey: .lastUpdate)
+                lastUpdate = convertDateFormat(lastUpdate ?? "")
                 id = chargingStationId
             }
             

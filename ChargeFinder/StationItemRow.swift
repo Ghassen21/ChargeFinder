@@ -20,7 +20,7 @@ struct StationItemRow: View {
                 .padding(.all)
             VStack(alignment: .leading) {
                 Text(stationItem!.chargingStationId)
-                    .fontWeight(.regular)
+                    .fontWeight(.semibold)
                 HStack{
                     Image("icons-power-kw")
                         .resizable()
@@ -49,6 +49,13 @@ struct StationItemRow: View {
                         .frame(width: 25, height: 25)
                     Text("\(stationItemStatus ?? "Unknown")")
                         .fontWeight(.medium)
+                }
+                HStack{
+                    Image("icons-update")
+                        .resizable()
+                        .frame(width: 25, height: 25)
+                    Text("\(stationItem?.lastUpdate ?? "Unknown")")
+                        .fontWeight(.light)
                 }
                 HStack{
                     Image("icons-location")

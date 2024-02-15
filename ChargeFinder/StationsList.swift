@@ -14,7 +14,7 @@ struct StationsList: View {
     @State private var animateEnd = true
     @State private var showingAlert = false
 
-    let timer = Timer.publish(every: 40, on: .main, in: .common).autoconnect()
+    let timer = Timer.publish(every: 60, on: .main, in: .common).autoconnect()
     
     var body: some View {
         
@@ -83,7 +83,6 @@ struct StationsList: View {
                     }
                 }
             }
-            
         }.alert("Please check you internet connection", isPresented: $showingAlert) {
             Button("OK", role: .cancel) { }
         }
@@ -92,11 +91,13 @@ struct StationsList: View {
             self.refetchStationsListData()
         }
     }
+    
+   
     func refetchStationsListData() {
         LocationServiceManager.shared.getStationListWithinRadius { result, error in
             if error == nil {
                 if result != nil{
-                    self.stationsList = []
+                    self.stationsList = result!
                 }
             }
         }
