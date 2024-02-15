@@ -116,7 +116,8 @@ extension LocationServiceManager: CLLocationManagerDelegate {
                                 return doubleTypeValue1 > doubleTypeValue2
                             }
                         }
-                        //save station in user default 
+                        
+                        //save station in user default
                         PersistenceManger().saveStationsList(StationList: sortedStationListbyPowerValue)
                         self.completionHandler?(sortedStationListbyPowerValue, nil)
                     case .failure(let error):
